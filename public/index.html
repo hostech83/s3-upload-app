@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>S3 Upload App</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>S3 Upload App</h1>
+
+      <!-- Upload Form -->
+      <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="image" id="fileInput" required />
+        <button type="submit">Upload</button>
+      </form>
+
+      <!-- Files will load here -->
+      <div id="files"></div>
+    </div>
+
+    <script>
+      // Fetch and render files
+      async function loadFiles() {
+        const res = await fetch("/list-json");
+        const files = await res.json();
+
+        const filesDiv = document.getElementById("files");
+        if (files.length === 0) {
+          filesDiv.innerHTML = "<p>No files uploaded yet.</p>";
+          return;
+        }
+
+        filesDiv.innerHTML = files
+          .map(
+            (f) => `
+        <div class="file-item">
+          <span>${f.Key}</span>
+          <a href="/download/${f.Key}">
+            <button>Download</button>
+          </a>
+        </div>`
+          )
+          .join("");
+      }
+
+      // Handle file upload
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const formData = new FormData();
+          formData.append(
+            "image",
+            document.getElementById("fileInput").files[0]
+          );
+
+          const res = await fetch("/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (res.ok) {
+            alert("✅ File uploaded successfully!");
+            document.getElementById("fileInput").value = ""; // reset input
+            loadFiles(); // refresh file list
+          } else {
+            alert("❌ Upload failed!");
+          }
+        });
+
+      // Load files on page load
+      loadFiles();
+    </script>
+  </body>
+</html>
